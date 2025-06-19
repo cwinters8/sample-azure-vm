@@ -5,6 +5,10 @@ locals {
 resource "azurerm_resource_group" "main" {
   name     = local.name
   location = "Central US"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "azurerm_virtual_network" "main" {

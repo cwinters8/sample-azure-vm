@@ -47,16 +47,23 @@ resource "tls_private_key" "vm" {
   rsa_bits  = 4096
 }
 
-# This may fail to create if the AD role assignment isn't up to date locally.
+# Secrets may fail to create if the AD role assignment isn't up to date locally.
 # I had to `az logout && az login` to get it to work.
-resource "azurerm_key_vault_secret" "vm" {
+resource "azurerm_key_vault_secret" "vm_private_key" {
   key_vault_id = azurerm_key_vault.main.id
-  name         = "${local.name}-vm-ssh-key"
-  content_type = "application/json"
-  value = jsonencode({
-    public_key      = tls_private_key.vm.public_key_openssh
-    private_key_pem = tls_private_key.vm.private_key_pem
-  })
+  name         = "${local.name}-vm-ssh-private-key"
+  value        = tls_private_key.vm.private_key_pem
+
+  depends_on = [
+    azuread_group_member.my_user,
+    azurerm_role_assignment.keyvault_admin,
+  ]
+}
+
+resource "azurerm_key_vault_secret" "vm_public_key" {
+  key_vault_id = azurerm_key_vault.main.id
+  name         = "${local.name}-vm-ssh-public-key"
+  value        = tls_private_key.vm.public_key_openssh
 
   depends_on = [
     azuread_group_member.my_user,
@@ -75,10 +82,10 @@ resource "azurerm_network_security_group" "vm" {
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
-    source_port_range          = "22"
+    source_port_range          = "*"
     destination_port_range     = "22"
     source_address_prefix      = "168.63.129.16/32"
-    destination_address_prefix = "VirtualNetwork"
+    destination_address_prefix = "*"
   }
 
   security_rule {
@@ -87,10 +94,22 @@ resource "azurerm_network_security_group" "vm" {
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
-    source_port_range          = "3389"
+    source_port_range          = "*"
     destination_port_range     = "3389"
     source_address_prefix      = "168.63.129.16/32"
-    destination_address_prefix = "VirtualNetwork"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "AllowOutbound"
+    priority                   = 102
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "*"
   }
 }
 
