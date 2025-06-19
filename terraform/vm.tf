@@ -4,8 +4,8 @@ locals {
 
 resource "azurerm_network_interface" "vm" {
   name                = "${local.name}-vm-nic"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = local.location
+  resource_group_name = local.rg_name
 
   ip_configuration {
     name                          = "${local.name}-vm-ip"
@@ -16,8 +16,8 @@ resource "azurerm_network_interface" "vm" {
 
 resource "azurerm_linux_virtual_machine" "vm" {
   name                            = "${local.name}-vm"
-  location                        = azurerm_resource_group.main.location
-  resource_group_name             = azurerm_resource_group.main.name
+  location                        = local.location
+  resource_group_name             = local.rg_name
   network_interface_ids           = [azurerm_network_interface.vm.id]
   size                            = "Standard_B2ts_v2"
   admin_username                  = local.admin_username
@@ -73,8 +73,8 @@ resource "azurerm_key_vault_secret" "vm_public_key" {
 
 resource "azurerm_network_security_group" "vm" {
   name                = "${local.name}-vm-nsg"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = local.location
+  resource_group_name = local.rg_name
 
   security_rule {
     name                       = "AllowSSH"

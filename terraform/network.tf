@@ -1,42 +1,35 @@
 locals {
-  name = "orion"
-}
-
-resource "azurerm_resource_group" "main" {
-  name     = local.name
+  name     = "orion"
+  rg_name  = local.name
   location = "Central US"
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "azurerm_virtual_network" "main" {
   name                = "${local.name}-network"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = local.location
+  resource_group_name = local.rg_name
   address_space       = ["10.0.0.0/16"]
 }
 
 resource "azurerm_subnet" "private" {
   name                 = "${local.name}-private"
-  resource_group_name  = azurerm_resource_group.main.name
+  resource_group_name  = local.rg_name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = ["10.0.1.0/24"]
 }
 
 resource "azurerm_public_ip" "nat" {
   name                = "${local.name}-nat-ip"
-  location            = azurerm_resource_group.main.location
-  resource_group_name = azurerm_resource_group.main.name
+  location            = local.location
+  resource_group_name = local.rg_name
   allocation_method   = "Static"
   sku                 = "Standard"
 }
 
 resource "azurerm_nat_gateway" "main" {
   name                = "${local.name}-nat"
-  resource_group_name = azurerm_resource_group.main.name
-  location            = azurerm_resource_group.main.location
+  resource_group_name = local.rg_name
+  location            = local.location
   sku_name            = "Standard"
 }
 

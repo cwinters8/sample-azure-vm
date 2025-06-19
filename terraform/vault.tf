@@ -1,7 +1,7 @@
 resource "azurerm_key_vault" "main" {
   name                      = "orions-vault"
-  location                  = azurerm_resource_group.main.location
-  resource_group_name       = azurerm_resource_group.main.name
+  location                  = local.location
+  resource_group_name       = local.rg_name
   sku_name                  = "standard"
   tenant_id                 = data.azurerm_client_config.current.tenant_id
   enable_rbac_authorization = true
